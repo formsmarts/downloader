@@ -14,6 +14,7 @@ import webbrowser
 from datetime import date
 from pathlib import Path
 from tkinter import filedialog, messagebox, simpledialog, ttk
+from tkinter import font as tkfont
 from tkinter.scrolledtext import ScrolledText
 
 from . import __version__
@@ -121,6 +122,8 @@ class App(ttk.Frame):
         _link(settings, "API key", API_KEY_URL).grid(row=2, column=0, sticky="w", pady=2)
         self.key_entry = ttk.Entry(settings, textvariable=self.key_var, show="•")
         self.key_entry.grid(row=2, column=1, sticky="ew", padx=PAD, pady=2)
+        for event in ("<FocusIn>", "<FocusOut>", "<Configure>"):
+            self.key_entry.bind(event, self._refresh_key_status, add="+")
         self.key_var.trace_add("write", lambda *_: self._refresh_key_status())
         self.account_var.trace_add("write", lambda *_: self._refresh_key_status())
 
@@ -197,44 +200,44 @@ class App(ttk.Frame):
         if chosen:
             self.dir_var.set(chosen)
 
-    def _refresh_key_status(self):
-        # Never display the full key: only its last characters (mask_key).
-        mask = secrets_store.mask_key
+    def _key_is_saved(self) -> bool:
         account = config_mod.normalize_account_id(self.account_var.get())
-        protected = self.mode_var.get() == secrets_store.MODE_PROTECTED
-
-        # A saved key can't be edited; the field unlocks when the Account ID
-        # is changed (or the key is no longer saved).
-        saved = (
+        return (
             bool(account)
             and account == self.cfg.get("account_id")
             and secrets_store.effective_mode(self.cfg) == secrets_store.MODE_PROTECTED
             and secrets_store.has_saved_key(account)
         )
-        if saved:
-            if self.key_var.get():
-                self.key_var.set("")  # re-enters this method
-                return
-            # Placeholder in the locked field, so users know the key is
-            # already there: dots only until it's unlocked, then its end.
-            if self.session_key:
-                self.key_placeholder_var.set(mask(self.session_key))
-                self.key_status_var.set("")
-            else:
-                self.key_placeholder_var.set("\u2022" * 14)
-                self.key_status_var.set("A key is saved, it's unlocked when you press Download.")
-            self.key_entry.configure(
-                textvariable=self.key_placeholder_var, show="", state="disabled"
-            )
-            return
-        self.key_entry.configure(textvariable=self.key_var, show="•", state="normal")
 
+    def _show_key_placeholder(self, show: bool):
+        """When a key is saved, the empty field is filled with dots so users
+        know they don't need to enter it again. Typing replaces the key."""
+        if show:
+            font = tkfont.nametofont("TkTextFont")
+            width = max(self.key_entry.winfo_width() - 12, 0)
+            self.key_placeholder_var.set("\u2022" * max(width // max(font.measure("\u2022"), 1), 14))
+            self.key_entry.configure(textvariable=self.key_placeholder_var, show="")
+        elif str(self.key_entry.cget("textvariable")) != str(self.key_var):
+            self.key_entry.configure(textvariable=self.key_var, show="•")
+
+    def _refresh_key_status(self, *_):
+        # Never display the full key: only its last characters (mask_key).
+        mask = secrets_store.mask_key
+        protected = self.mode_var.get() == secrets_store.MODE_PROTECTED
         typed = self.key_var.get().strip()
+        saved = self._key_is_saved()
+        focused = self.focus_get() is self.key_entry
+        self._show_key_placeholder(saved and not typed and not focused)
+
         if typed:
             self.key_status_var.set(
                 "Key entered: {}{}".format(mask(typed), "  (click Save settings)" if protected else "")
             )
-        elif self.session_key and account == self.cfg.get("account_id"):
+        elif saved:
+            self.key_status_var.set("A key is saved, it's unlocked when you press Download.")
+        elif self.session_key and config_mod.normalize_account_id(
+            self.account_var.get()
+        ) == self.cfg.get("account_id"):
             self.key_status_var.set(
                 "Key {} kept in memory for this session only.".format(mask(self.session_key))
             )
