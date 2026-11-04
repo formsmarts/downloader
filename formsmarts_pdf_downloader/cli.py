@@ -104,7 +104,7 @@ def run_configure_wizard():
             print("Verify with {} to save the key...".format(secrets_store.protection_name()))
             try:
                 secrets_store.save_api_key(account_id, api_key)
-                print("API key saved.")
+                print("API key {} saved.".format(secrets_store.mask_key(api_key)))
             except secrets_store.KeyStoreError as e:
                 print("The API key could not be saved: {}".format(e))
                 print("You'll be asked for it each time you run this tool.")
@@ -161,6 +161,7 @@ def _resolve_api_key(cfg: dict) -> str:
         try:
             key = secrets_store.load_api_key(account_id)
             if key:
+                print("Using saved API key {}".format(secrets_store.mask_key(key)))
                 return key
             print("No saved API key was found.")
         except secrets_store.KeyStoreError as e:
@@ -169,7 +170,10 @@ def _resolve_api_key(cfg: dict) -> str:
         print("Your API key is saved for the desktop app, which this command")
         print("line tool can't access on this computer.")
 
-    return getpass.getpass("API Key (input hidden, not saved): ").strip()
+    key = getpass.getpass("API Key (input hidden, not saved): ").strip()
+    if key:
+        print("Using API key {}".format(secrets_store.mask_key(key)))
+    return key
 
 
 def cmd_download(args):

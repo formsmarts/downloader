@@ -57,7 +57,6 @@ class App(ttk.Frame):
         self.account_var = tk.StringVar(value=self.cfg.get("account_id") or "")
         self.key_var = tk.StringVar()
         self.key_status_var = tk.StringVar()
-        self.show_key_var = tk.BooleanVar(value=False)
         self.session_key = None  # API key kept in memory for this session only
         self.busy = False
         self.mode_options = secrets_store.mode_labels()
@@ -105,11 +104,10 @@ class App(ttk.Frame):
         )
 
         ttk.Label(settings, text="API key:").grid(row=2, column=0, sticky="w", pady=2)
-        self.key_entry = ttk.Entry(settings, textvariable=self.key_var, show="•")
-        self.key_entry.grid(row=2, column=1, sticky="ew", padx=PAD, pady=2)
-        ttk.Checkbutton(
-            settings, text="Show", variable=self.show_key_var, command=self._toggle_key
-        ).grid(row=2, column=2, sticky="w", pady=2)
+        ttk.Entry(settings, textvariable=self.key_var, show="•").grid(
+            row=2, column=1, sticky="ew", padx=PAD, pady=2
+        )
+        self.key_var.trace_add("write", lambda *_: self._refresh_key_status())
 
         storage = ttk.Frame(settings)
         storage.grid(row=3, column=1, columnspan=2, sticky="w", padx=PAD, pady=(4, 0))
@@ -185,18 +183,32 @@ class App(ttk.Frame):
         if chosen:
             self.dir_var.set(chosen)
 
-    def _toggle_key(self):
-        self.key_entry.configure(show="" if self.show_key_var.get() else "•")
-
     def _refresh_key_status(self):
-        account = self.account_var.get().strip()
-        if self.mode_var.get() == secrets_store.MODE_PROTECTED:
+        # Never display the full key: only its last characters (mask_key).
+        typed = self.key_var.get().strip()
+        mask = secrets_store.mask_key
+        protected = self.mode_var.get() == secrets_store.MODE_PROTECTED
+        if typed:
+            self.key_status_var.set(
+                "Key entered: {}{}".format(mask(typed), "  (click Save settings)" if protected else "")
+            )
+        elif self.session_key:
+            if protected and secrets_store.effective_mode(self.cfg) == secrets_store.MODE_PROTECTED:
+                self.key_status_var.set("Saved key: {}".format(mask(self.session_key)))
+            else:
+                self.key_status_var.set(
+                    "Key {} kept in memory for this session only.".format(mask(self.session_key))
+                )
+        elif protected:
+            account = self.account_var.get().strip()
             if account and secrets_store.has_saved_key(account):
-                self.key_status_var.set("A key is saved. Leave the field blank to keep it.")
+                self.key_status_var.set(
+                    "A key is saved; it's unlocked with {} when you download.".format(
+                        secrets_store.protection_name()
+                    )
+                )
             else:
                 self.key_status_var.set("Enter your API key and click Save settings.")
-        elif self.session_key:
-            self.key_status_var.set("Key in memory for this session only.")
         else:
             self.key_status_var.set("You'll be asked for the key when downloading.")
 
@@ -364,6 +376,7 @@ class App(ttk.Frame):
                 self.status_var.set("Ready.")
                 if result:
                     self.session_key = result
+                    self._refresh_key_status()
                     proceed(result)
                 elif not isinstance(error, secrets_store.UnlockCancelled):
                     if error:

@@ -25,6 +25,14 @@ MODE_PROTECTED = "protected"
 MODES = (MODE_NONE, MODE_PROTECTED)
 
 
+def mask_key(api_key: str) -> str:
+    """Redacted form for display: only the last 8 characters (fewer for an
+    unusually short key), so users can tell which key they entered."""
+    key = (api_key or "").strip()
+    visible = 8 if len(key) >= 16 else len(key) // 2
+    return "\u2022" * 8 + (key[-visible:] if visible else "")
+
+
 class KeyStoreError(Exception):
     """Saving or reading the protected key failed."""
 
