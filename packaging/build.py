@@ -11,7 +11,9 @@ PyInstaller can't cross-compile: build the Windows app on Windows and the
 macOS app on a Mac (the GitHub Actions workflow does both).
 
 On macOS, set MACOS_SIGN_IDENTITY to a "Developer ID Application" identity
-to sign the bundled code, then run packaging/macos/sign_and_notarize.sh.
+(name or SHA-1) to sign the bundled code, then run
+packaging/macos/sign_and_notarize.sh. MACOS_BUNDLE_ID overrides the bundle
+identifier.
 Without signing, the app works but can't save the API key (Touch ID
 storage requires a signed app with a provisioning profile).
 """
@@ -28,7 +30,7 @@ sys.path.insert(0, str(ROOT))
 from formsmarts_pdf_downloader import __version__  # noqa: E402
 
 APP_NAME = "FormSmarts PDF Downloader"
-BUNDLE_ID = "com.formsmarts.pdfdownloader"
+BUNDLE_ID = os.environ.get("MACOS_BUNDLE_ID") or "com.formsmarts.pdfdownloader"
 
 
 def main():

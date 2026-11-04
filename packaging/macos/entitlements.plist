@@ -2,19 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <!--
-  __TEAM_ID__ is replaced at signing time (see sign_and_notarize.sh).
+  __TEAM_ID__ and __BUNDLE_ID__ are replaced at signing time (see sign_and_notarize.sh).
   The application identifier and keychain access group give the app access
   to the data protection keychain, where the API key is stored behind
   Touch ID. They must match the embedded provisioning profile.
 -->
 <dict>
     <key>com.apple.application-identifier</key>
-    <string>__TEAM_ID__.com.formsmarts.pdfdownloader</string>
+    <string>__TEAM_ID__.__BUNDLE_ID__</string>
     <key>com.apple.developer.team-identifier</key>
     <string>__TEAM_ID__</string>
     <key>keychain-access-groups</key>
     <array>
-        <string>__TEAM_ID__.com.formsmarts.pdfdownloader</string>
+        <string>__TEAM_ID__.__BUNDLE_ID__</string>
     </array>
 </dict>
 </plist>

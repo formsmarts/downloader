@@ -28,9 +28,8 @@ jobs:
   macos:
     runs-on: macos-14
     env:
-      MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      HAS_SIGNING: ${{ secrets.MACOS_CERT_P12 != '' }}
+      MACOS_BUNDLE_ID: ${{ vars.MACOS_BUNDLE_ID }}
+      HAS_SIGNING: ${{ secrets.MACOS_CERTIFICATE_P12 != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -42,29 +41,38 @@ jobs:
       - name: Import signing certificate
         if: env.HAS_SIGNING == 'true'
         env:
-          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
-          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
-          MACOS_PROVISIONING_PROFILE_B64: ${{ secrets.MACOS_PROVISIONING_PROFILE }}
-          NOTARY_KEY_B64: ${{ secrets.NOTARY_KEY }}
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_PROVISIONING_PROFILE: ${{ secrets.MACOS_PROVISIONING_PROFILE }}
+          NOTARY_API_KEY_P8: ${{ secrets.NOTARY_API_KEY_P8 }}
         run: |
           KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
           KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           security set-keychain-settings -lut 21600 "$KEYCHAIN"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-          echo "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
-          security import "$RUNNER_TEMP/cert.p12" -P "$MACOS_CERT_PASSWORD" \
+          echo "$MACOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -P "$MACOS_CERTIFICATE_PASSWORD" \
             -A -t cert -f pkcs12 -k "$KEYCHAIN"
           rm "$RUNNER_TEMP/cert.p12"
           security set-key-partition-list -S apple-tool:,apple:,codesign: \
             -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           security list-keychains -d user -s "$KEYCHAIN" \
             $(security list-keychains -d user | tr -d '"')
-          echo "$MACOS_PROVISIONING_PROFILE_B64" | base64 --decode \
-            > "$RUNNER_TEMP/app.provisionprofile"
-          echo "MACOS_PROVISIONING_PROFILE=$RUNNER_TEMP/app.provisionprofile" >> "$GITHUB_ENV"
-          if [ -n "$NOTARY_KEY_B64" ]; then
-            echo "$NOTARY_KEY_B64" | base64 --decode > "$RUNNER_TEMP/notary.p8"
+          IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" \
+            | awk '/Developer ID Application/ {print $2; exit}')"
+          if [ -z "$IDENTITY" ]; then
+            echo "No Developer ID Application identity in MACOS_CERTIFICATE_P12" >&2
+            exit 1
+          fi
+          echo "MACOS_SIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          if [ -n "$MACOS_PROVISIONING_PROFILE" ]; then
+            echo "$MACOS_PROVISIONING_PROFILE" | base64 --decode \
+              > "$RUNNER_TEMP/app.provisionprofile"
+            echo "MACOS_PROVISIONING_PROFILE=$RUNNER_TEMP/app.provisionprofile" >> "$GITHUB_ENV"
+          fi
+          if [ -n "$NOTARY_API_KEY_P8" ]; then
+            echo "$NOTARY_API_KEY_P8" | base64 --decode > "$RUNNER_TEMP/notary.p8"
             echo "NOTARY_KEY_PATH=$RUNNER_TEMP/notary.p8" >> "$GITHUB_ENV"
           fi
 
@@ -74,8 +82,8 @@ jobs:
       - name: Sign and notarize
         if: env.HAS_SIGNING == 'true'
         env:
-          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
-          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+          NOTARY_API_KEY_ID: ${{ secrets.NOTARY_API_KEY_ID }}
+          NOTARY_API_ISSUER_ID: ${{ secrets.NOTARY_API_ISSUER_ID }}
         run: packaging/macos/sign_and_notarize.sh
 
       - name: Package unsigned build
