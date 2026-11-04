@@ -33,7 +33,7 @@ def mask_key(api_key: str) -> str:
     unusually short key), so users can tell which key they entered."""
     key = (api_key or "").strip()
     visible = 8 if len(key) >= 16 else len(key) // 2
-    return "\u2022" * 8 + (key[-visible:] if visible else "")
+    return "\u2022" * 6 + (key[-visible:] if visible else "")
 
 
 class KeyStoreError(Exception):

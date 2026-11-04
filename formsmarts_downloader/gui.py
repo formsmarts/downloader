@@ -75,6 +75,7 @@ class App(ttk.Frame):
         self.dir_var = tk.StringVar(value=self.cfg["download_directory"])
         self.account_var = tk.StringVar(value=self.cfg.get("account_id") or "")
         self.key_var = tk.StringVar()
+        self.key_placeholder_var = tk.StringVar()  # shown in the field when a key is saved
         self.key_status_var = tk.StringVar()
         self.session_key = None  # API key kept in memory for this session only
         self.busy = False
@@ -214,13 +215,19 @@ class App(ttk.Frame):
             if self.key_var.get():
                 self.key_var.set("")  # re-enters this method
                 return
-            self.key_entry.configure(state="disabled")
+            # Placeholder in the locked field, so users know the key is
+            # already there: dots only until it's unlocked, then its end.
             if self.session_key:
-                self.key_status_var.set("Saved key: {}".format(mask(self.session_key)))
+                self.key_placeholder_var.set(mask(self.session_key))
+                self.key_status_var.set("")
             else:
+                self.key_placeholder_var.set("\u2022" * 14)
                 self.key_status_var.set("A key is saved, it's unlocked when you press Download.")
+            self.key_entry.configure(
+                textvariable=self.key_placeholder_var, show="", state="disabled"
+            )
             return
-        self.key_entry.configure(state="normal")
+        self.key_entry.configure(textvariable=self.key_var, show="•", state="normal")
 
         typed = self.key_var.get().strip()
         if typed:
