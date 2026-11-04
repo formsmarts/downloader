@@ -2,7 +2,7 @@
 
 The API key itself never lives here; see secrets_store.py. The
 "key_storage" entry records the user's choice of how it is stored. Configs
-written by versions before 1.1 don't have it (their key, if any, was saved
+written by version 1.0 don't have it (their key, if any, was saved
 unprotected and gets migrated).
 """
 

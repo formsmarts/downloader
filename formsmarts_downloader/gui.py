@@ -336,7 +336,7 @@ class App(ttk.Frame):
         self._refresh_key_status()
 
     def _migrate_legacy(self):
-        """Versions before 1.1 saved the key unprotected in the OS credential
+        """Version 1.0 saved the key unprotected in the OS credential
         store. Move it out of there (into protected storage if possible)."""
         account = self.cfg.get("account_id")
         if "key_storage" in self.cfg or not account:

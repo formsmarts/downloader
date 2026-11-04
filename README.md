@@ -47,7 +47,7 @@ The API key is never written to the settings file.
 
 If neither is available, the app only offers the first option.
 
-Versions before 1.1 saved the key without this protection. The new version
+Version 1.0 saved the key without this protection. The new version
 removes such a saved key and offers to save it again with protection.
 
 ## Output

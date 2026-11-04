@@ -120,7 +120,7 @@ def run_configure_wizard():
 
 
 def _migrate_legacy(cfg: dict, quiet: bool = False):
-    """Versions before 1.1 saved the key unprotected in the OS credential
+    """Version 1.0 saved the key unprotected in the OS credential
     store. Remove it from there, re-saving it with OS protection if
     possible. Returns the legacy key, if there was one."""
     if "key_storage" in cfg or not cfg.get("account_id"):
