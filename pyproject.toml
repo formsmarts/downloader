@@ -17,6 +17,8 @@ dependencies = [
     # macOS Touch ID protected key storage (signed app builds)
     "pyobjc-framework-Security>=10.0; sys_platform == 'darwin'",
     "pyobjc-framework-LocalAuthentication>=10.0; sys_platform == 'darwin'",
+    # macOS native date picker
+    "pyobjc-framework-Cocoa>=10.0; sys_platform == 'darwin'",
 ]
 
 [project.scripts]
@@ -27,6 +29,9 @@ fs-downloader-gui = "formsmarts_downloader.gui:main"
 
 [tool.setuptools]
 packages = ["formsmarts_downloader"]
+
+[tool.setuptools.package-data]
+formsmarts_downloader = ["assets/*"]
 
 [build-system]
 requires = ["setuptools>=61.0"]

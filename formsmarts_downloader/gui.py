@@ -10,13 +10,14 @@ import subprocess
 import sys
 import threading
 import tkinter as tk
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from tkinter import filedialog, messagebox, simpledialog, ttk
 from tkinter.scrolledtext import ScrolledText
 
 from . import __version__
 from . import config as config_mod
+from . import datefield
 from . import secrets_store
 
 APP_TITLE = "FormSmarts Downloader"
@@ -24,13 +25,16 @@ POLL_MS = 100
 PAD = 8
 
 
-def _parse_date(raw: str, label: str) -> date:
-    try:
-        return datetime.strptime(raw.strip(), "%Y-%m-%d").date()
-    except ValueError:
+ASSETS = Path(__file__).resolve().parent / "assets"
+
+
+def _check_date(widget, label: str) -> date:
+    d = widget.get_date()
+    if d is None:
         raise ValueError(
-            "{} must be a date in YYYY-MM-DD format (e.g. 2026-01-31).".format(label)
+            "{} isn't a valid date. Enter it like this: {}".format(label, datefield.example())
         )
+    return d
 
 
 def _open_folder(path: Path) -> None:
@@ -67,8 +71,6 @@ class App(ttk.Frame):
         )
         self.mode_var = tk.StringVar(value=default_mode)
         self.form_var = tk.StringVar()
-        self.start_var = tk.StringVar()
-        self.end_var = tk.StringVar(value=date.today().isoformat())
         self.status_var = tk.StringVar(value="Ready.")
 
         self._build()
@@ -138,15 +140,14 @@ class App(ttk.Frame):
         ttk.Label(dl, text="Form ID:").grid(row=0, column=0, sticky="w")
         self.form_entry = ttk.Entry(dl, textvariable=self.form_var, width=14)
         self.form_entry.grid(row=0, column=1, sticky="w", padx=(4, PAD * 2))
+        today = date.today()
         ttk.Label(dl, text="From:").grid(row=0, column=2, sticky="w")
-        ttk.Entry(dl, textvariable=self.start_var, width=12).grid(
-            row=0, column=3, sticky="w", padx=(4, PAD * 2)
-        )
+        self.start_field = datefield.DateField(dl, today.replace(day=1))
+        self.start_field.grid(row=0, column=3, sticky="w", padx=(4, PAD * 2))
         ttk.Label(dl, text="To:").grid(row=0, column=4, sticky="w")
-        ttk.Entry(dl, textvariable=self.end_var, width=12).grid(
-            row=0, column=5, sticky="w", padx=(4, 0)
-        )
-        ttk.Label(dl, text="Dates are YYYY-MM-DD, inclusive.", foreground="gray").grid(
+        self.end_field = datefield.DateField(dl, today)
+        self.end_field.grid(row=0, column=5, sticky="w", padx=(4, 0))
+        ttk.Label(dl, text="Both dates are included.", foreground="gray").grid(
             row=1, column=0, columnspan=6, sticky="w", pady=(2, 0)
         )
 
@@ -200,7 +201,7 @@ class App(ttk.Frame):
                     "Key {} kept in memory for this session only.".format(mask(self.session_key))
                 )
         elif protected:
-            account = self.account_var.get().strip()
+            account = config_mod.normalize_account_id(self.account_var.get())
             if account and secrets_store.has_saved_key(account):
                 self.key_status_var.set(
                     "A key is saved; it's unlocked with {} when you download.".format(
@@ -245,7 +246,8 @@ class App(ttk.Frame):
 
     def _validate_settings(self):
         directory = self.dir_var.get().strip()
-        account = self.account_var.get().strip()
+        account = config_mod.normalize_account_id(self.account_var.get())
+        self.account_var.set(account)
         if not directory:
             raise ValueError("Please choose a download folder.")
         if not account:
@@ -419,8 +421,8 @@ class App(ttk.Frame):
         try:
             if not form_id:
                 raise ValueError("Please enter a Form ID.")
-            start_date = _parse_date(self.start_var.get(), "Start date")
-            end_date = _parse_date(self.end_var.get(), "End date")
+            start_date = _check_date(self.start_field, "The start date")
+            end_date = _check_date(self.end_field, "The end date")
             if end_date < start_date:
                 raise ValueError("The end date cannot be before the start date.")
             output_dir = downloader.build_output_dir(
@@ -480,13 +482,13 @@ class App(ttk.Frame):
                 status, ref, extra = self.events.get_nowait()
                 if status == "ok":
                     self.counts["downloaded"] += 1
-                    self._log("Downloaded {} → {}".format(ref, extra.name))
+                    self._log("Downloaded entry {} → {}".format(ref, extra.name))
                 elif status == "skip":
                     self.counts["skipped"] += 1
-                    self._log("Already downloaded, skipped {}".format(ref))
+                    self._log("Already downloaded, skipped entry {}".format(ref))
                 elif status == "error":
                     self.counts["failed"] += 1
-                    self._log("FAILED {}: {}".format(ref, extra))
+                    self._log("FAILED entry {}: {}".format(ref, extra))
                 elif status == "auth_failed":
                     self.session_key = None
                 elif status == "done":
@@ -564,9 +566,20 @@ def _enable_windows_dpi_awareness():
         pass
 
 
+def _set_window_icon(root: tk.Tk):
+    try:
+        if sys.platform == "win32":
+            root.iconbitmap(default=str(ASSETS / "app_icon.ico"))
+        elif sys.platform != "darwin":  # macOS uses the app bundle's icon
+            root.iconphoto(True, tk.PhotoImage(file=str(ASSETS / "app_icon.png")))
+    except (tk.TclError, OSError):
+        pass
+
+
 def main():
     _enable_windows_dpi_awareness()
     root = tk.Tk()
+    _set_window_icon(root)
     root.title("{} {}".format(APP_TITLE, __version__))
     root.minsize(560, 480)
     app = App(root)

@@ -46,17 +46,24 @@ def main():
         # Imported lazily; list explicitly so they're always bundled.
         "--hidden-import", "formsmarts_downloader.downloader",
         "--collect-submodules", "keyring.backends",
+        "--add-data", "{}{}formsmarts_downloader/assets".format(
+            ROOT / "formsmarts_downloader" / "assets", os.pathsep
+        ),
     ]
     if sys.platform == "win32":
         args += [
             "--onefile",
+            "--icon", str(ROOT / "packaging" / "icons" / "app_icon.ico"),
             "--hidden-import", "formsmarts_downloader._win_hello",
+            "--hidden-import", "formsmarts_downloader._win_dates",
             "--collect-submodules", "winrt",
         ]
     elif sys.platform == "darwin":
         args += [
             "--osx-bundle-identifier", BUNDLE_ID,
+            "--icon", str(ROOT / "packaging" / "icons" / "app_icon.icns"),
             "--hidden-import", "formsmarts_downloader._mac_keychain",
+            "--hidden-import", "formsmarts_downloader._mac_dates",
         ]
         identity = os.environ.get("MACOS_SIGN_IDENTITY")
         if identity:

@@ -73,7 +73,7 @@ def run_configure_wizard():
     print("in your FormSmarts account).")
     current_account = cfg.get("account_id") or ""
     account_id = input("Account ID (e.g. FSA-123456) [{}]: ".format(current_account)).strip()
-    account_id = account_id or current_account
+    account_id = config_mod.normalize_account_id(account_id or current_account)
     if not account_id:
         print("Account ID is required. Configuration was not saved.")
         return
@@ -233,13 +233,13 @@ def cmd_download(args):
     def progress(status, ref, extra):
         if status == "ok":
             counts["downloaded"] += 1
-            print("  downloaded {} -> {}".format(ref, extra.name))
+            print("  downloaded entry {} -> {}".format(ref, extra.name))
         elif status == "skip":
             counts["skipped"] += 1
-            print("  already downloaded, skipping {}".format(ref))
+            print("  already downloaded, skipping entry {}".format(ref))
         elif status == "error":
             counts["failed"].append((ref, extra))
-            print("  FAILED {}: {}".format(ref, extra))
+            print("  FAILED entry {}: {}".format(ref, extra))
 
     error_message = None
     try:

@@ -19,6 +19,11 @@ LEGACY_APP_NAME = "FormSmartsPDFDownloader"
 
 ACCOUNT_ID_RE = re.compile(r"^FSA-\d+$")
 
+
+def normalize_account_id(raw: str) -> str:
+    """Account IDs are case-insensitive: 'fsa-123' is saved as 'FSA-123'."""
+    return (raw or "").strip().upper()
+
 DEFAULTS = {
     "download_directory": str(Path.home() / "Documents" / "FormSmarts PDFs"),
     "account_id": None,
