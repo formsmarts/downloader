@@ -30,7 +30,7 @@ sys.path.insert(0, str(ROOT))
 from formsmarts_downloader import __version__  # noqa: E402
 
 APP_NAME = "FormSmarts Downloader"
-BUNDLE_ID = os.environ.get("MACOS_BUNDLE_ID") or "com.formsmarts.downloader"
+BUNDLE_ID = os.environ.get("MACOS_BUNDLE_ID") or "com.formsmarts.Downloader"
 
 
 def main():
