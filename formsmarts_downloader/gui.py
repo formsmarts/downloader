@@ -91,13 +91,13 @@ class App(ttk.Frame):
         settings.grid(row=0, column=0, sticky="ew")
         settings.columnconfigure(1, weight=1)
 
-        ttk.Label(settings, text="Download folder:").grid(row=0, column=0, sticky="w", pady=2)
+        ttk.Label(settings, text="Download folder").grid(row=0, column=0, sticky="w", pady=2)
         ttk.Entry(settings, textvariable=self.dir_var).grid(
             row=0, column=1, sticky="ew", padx=PAD, pady=2
         )
         ttk.Button(settings, text="Browse…", command=self._browse).grid(row=0, column=2, pady=2)
 
-        ttk.Label(settings, text="Account ID:").grid(row=1, column=0, sticky="w", pady=2)
+        ttk.Label(settings, text="Account ID").grid(row=1, column=0, sticky="w", pady=2)
         ttk.Entry(settings, textvariable=self.account_var, width=20).grid(
             row=1, column=1, sticky="w", padx=PAD, pady=2
         )
@@ -105,7 +105,7 @@ class App(ttk.Frame):
             row=1, column=1, columnspan=2, sticky="e", pady=2
         )
 
-        ttk.Label(settings, text="API key:").grid(row=2, column=0, sticky="w", pady=2)
+        ttk.Label(settings, text="API key").grid(row=2, column=0, sticky="w", pady=2)
         ttk.Entry(settings, textvariable=self.key_var, show="•").grid(
             row=2, column=1, sticky="ew", padx=PAD, pady=2
         )
@@ -137,14 +137,14 @@ class App(ttk.Frame):
         dl.grid(row=1, column=0, sticky="ew", pady=(PAD, 0))
         dl.columnconfigure(5, weight=1)
 
-        ttk.Label(dl, text="Form ID:").grid(row=0, column=0, sticky="w")
-        self.form_entry = ttk.Entry(dl, textvariable=self.form_var, width=14)
+        ttk.Label(dl, text="Form ID").grid(row=0, column=0, sticky="w")
+        self.form_entry = ttk.Entry(dl, textvariable=self.form_var, width=8)
         self.form_entry.grid(row=0, column=1, sticky="w", padx=(4, PAD * 2))
         today = date.today()
-        ttk.Label(dl, text="From:").grid(row=0, column=2, sticky="w")
+        ttk.Label(dl, text="From").grid(row=0, column=2, sticky="w")
         self.start_field = datefield.DateField(dl, today.replace(day=1))
         self.start_field.grid(row=0, column=3, sticky="w", padx=(4, PAD * 2))
-        ttk.Label(dl, text="To:").grid(row=0, column=4, sticky="w")
+        ttk.Label(dl, text="To").grid(row=0, column=4, sticky="w")
         self.end_field = datefield.DateField(dl, today)
         self.end_field.grid(row=0, column=5, sticky="w", padx=(4, 0))
         ttk.Label(dl, text="Both dates are included.", foreground="gray").grid(

@@ -29,6 +29,53 @@ from Foundation import (
 )
 
 
+def calendar_icon_png(point_size: float = 13.0) -> bytes:
+    """Apple's "calendar" SF Symbol as PNG data, tinted for the current
+    light/dark appearance (macOS 11+)."""
+    from AppKit import (
+        NSApp,
+        NSAppearanceNameAqua,
+        NSAppearanceNameDarkAqua,
+        NSBitmapImageRep,
+        NSColor,
+        NSCompositingOperationSourceAtop,
+        NSGraphicsContext,
+        NSImage,
+        NSImageSymbolConfiguration,
+        NSPNGFileType,
+        NSRectFillUsingOperation,
+    )
+
+    image = NSImage.imageWithSystemSymbolName_accessibilityDescription_(
+        "calendar", "Choose a date"
+    )
+    if image is None:
+        raise RuntimeError("SF Symbols aren't available")
+    image = image.imageWithSymbolConfiguration_(
+        NSImageSymbolConfiguration.configurationWithPointSize_weight_(point_size, 0.0)
+    )
+    w, h = image.size().width, image.size().height
+    rep = NSBitmapImageRep.alloc().initWithBitmapDataPlanes_pixelsWide_pixelsHigh_bitsPerSample_samplesPerPixel_hasAlpha_isPlanar_colorSpaceName_bytesPerRow_bitsPerPixel_(
+        None, int(round(w)), int(round(h)), 8, 4, True, False, "NSDeviceRGBColorSpace", 0, 0
+    )
+    dark = (
+        NSApp() is not None
+        and NSApp().effectiveAppearance().bestMatchFromAppearancesWithNames_(
+            [NSAppearanceNameAqua, NSAppearanceNameDarkAqua]
+        ) == NSAppearanceNameDarkAqua
+    )
+    gray = 0.85 if dark else 0.25
+    ctx = NSGraphicsContext.graphicsContextWithBitmapImageRep_(rep)
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.setCurrentContext_(ctx)
+    image.drawInRect_(NSMakeRect(0, 0, w, h))
+    NSColor.colorWithWhite_alpha_(gray, 1.0).set()
+    NSRectFillUsingOperation(NSMakeRect(0, 0, w, h), NSCompositingOperationSourceAtop)
+    ctx.flushGraphics()
+    NSGraphicsContext.restoreGraphicsState()
+    return bytes(rep.representationUsingType_properties_(NSPNGFileType, {}))
+
+
 def _formatter():
     fmt = NSDateFormatter.alloc().init()
     fmt.setLocale_(NSLocale.autoupdatingCurrentLocale())

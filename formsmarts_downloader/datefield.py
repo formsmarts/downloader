@@ -119,8 +119,14 @@ class _TextDateField(ttk.Frame):
         entry.pack(side="left")
         entry.bind("<FocusOut>", self._normalize)
         if sys.platform == "darwin" and self._fmt._mac:
-            self._button = ttk.Button(self, text="▾", width=2, command=self._open_picker)
-            self._button.pack(side="left", padx=(2, 0))
+            self._icon = _calendar_icon()
+            if self._icon is not None:
+                self._button = ttk.Button(
+                    self, image=self._icon, style="Toolbutton", command=self._open_picker
+                )
+            else:
+                self._button = ttk.Button(self, text="▾", width=2, command=self._open_picker)
+            self._button.pack(side="left", padx=(4, 0))
 
     def _normalize(self, _event=None):
         d = self._fmt.parse(self.var.get())
@@ -138,6 +144,17 @@ class _TextDateField(ttk.Frame):
     def get_date(self):
         """The entered date, or None if it isn't a valid date."""
         return self._fmt.parse(self.var.get())
+
+
+def _calendar_icon():
+    try:
+        import base64
+
+        from . import _mac_dates
+
+        return tk.PhotoImage(data=base64.b64encode(_mac_dates.calendar_icon_png()))
+    except Exception:
+        return None
 
 
 def DateField(master, initial: date):
