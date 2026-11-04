@@ -6,11 +6,11 @@
   dependencies.
 
   What it does:
-    1. Locates a usable Python 3.8+, installing it (via winget, or the
+    1. Locates a usable Python 3.9+, installing it (via winget, or the
        official python.org installer) if none is found.
     2. Creates a private virtual environment under
        %LOCALAPPDATA%\FormSmartsPDFDownloader\venv
-    3. Installs the application and its dependencies (formsmarts, keyring)
+    3. Installs the application and its dependencies (formsmarts, keyring, Windows Hello support)
        into that virtual environment via pip - never system-wide, and
        never relying on the current working directory to find the app.
     4. Creates a "FormSmarts PDF Downloader" shortcut on the Desktop that
@@ -19,7 +19,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$MinPythonVersion = [version]"3.8.0"
+$MinPythonVersion = [version]"3.9.0"
 $PythonInstallerVersion = "3.12.6"
 $PythonInstallerUrl = "https://www.python.org/ftp/python/$PythonInstallerVersion/python-$PythonInstallerVersion-amd64.exe"
 
@@ -82,7 +82,7 @@ function Find-ExistingPython {
 }
 
 function Install-Python {
-    Write-Step "Python 3.8+ not found - installing Python $PythonInstallerVersion"
+    Write-Step "Python 3.9+ not found - installing Python $PythonInstallerVersion"
 
     $winget = Get-Command winget -ErrorAction SilentlyContinue
     if ($winget) {

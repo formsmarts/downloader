@@ -14,7 +14,7 @@ try:
         AuthenticationError,
     )
 except ImportError as e:
-    raise SystemExit(
+    raise ImportError(
         "Missing dependency 'formsmarts'.\n"
         "Install requirements with:\n"
         "  pip install -r requirements.txt\n"
@@ -48,9 +48,13 @@ def download_submissions(
     end_date: date,
     output_dir: Path,
     progress_cb=None,
+    cancel_event=None,
 ):
     """Download every PDF for `form_id` submitted between start_date and
     end_date (inclusive) into output_dir. Returns (downloaded, skipped, failed).
+
+    If `cancel_event` (a threading.Event) is given and gets set, the run stops
+    before the next submission.
     """
     auth = APIAuthenticator(account_id, api_key)
 
@@ -63,6 +67,9 @@ def download_submissions(
     )
 
     for entry in entries:
+        if cancel_event is not None and cancel_event.is_set():
+            break
+
         submitted_at = entry.submitted_at
         if submitted_at and not (start_date <= submitted_at.date() <= end_date):
             # Defensive: skip anything outside the requested range even if

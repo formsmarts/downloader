@@ -1,16 +1,20 @@
 """Plain-text configuration file (download directory, account ID).
 
-The API key itself never lives here. It is only ever written to the OS
-secret store (see secrets_store.py); if none is available it is never
-persisted, and the user is prompted for it every run.
+The API key itself never lives here; see secrets_store.py. The
+"key_storage" entry records the user's choice of how it is stored. Configs
+written by versions before 1.1 don't have it (their key, if any, was saved
+unprotected and gets migrated).
 """
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
 APP_NAME = "FormSmartsPDFDownloader"
+
+ACCOUNT_ID_RE = re.compile(r"^FSA-\d+$")
 
 DEFAULTS = {
     "download_directory": str(Path.home() / "Documents" / "FormSmarts PDFs"),

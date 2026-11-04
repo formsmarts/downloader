@@ -1,2 +1,2 @@
-formsmarts>=2.1
-keyring>=24.0
+# Installs the package and its dependencies (see pyproject.toml).
+-e .

@@ -5,7 +5,7 @@
       (%LOCALAPPDATA%\FormSmartsPDFDownloader)
     - Saved settings (download folder, account ID)
       (%APPDATA%\FormSmartsPDFDownloader)
-    - The saved API key, if any was saved to Windows Credential Manager
+    - The saved API key (Windows Credential Manager) and Windows Hello key
     - The Desktop shortcut
 
   PDFs already downloaded are left untouched - they live in whatever
@@ -15,9 +15,7 @@
 $ErrorActionPreference = "Stop"
 
 $InstallDir   = Join-Path $env:LOCALAPPDATA "FormSmartsPDFDownloader"
-$VenvPython   = Join-Path $InstallDir "venv\Scripts\python.exe"
 $ConfigDir    = Join-Path $env:APPDATA "FormSmartsPDFDownloader"
-$ConfigPath   = Join-Path $ConfigDir "config.json"
 $DesktopDir   = [Environment]::GetFolderPath("Desktop")
 $LauncherPath = Join-Path $DesktopDir "FormSmarts PDF Downloader.bat"
 
@@ -29,7 +27,7 @@ function Write-Step($msg) {
 Write-Host "This will remove FormSmarts PDF Downloader from this computer:"
 Write-Host "  - The application and its private Python environment"
 Write-Host "  - Your saved download folder / account ID settings"
-Write-Host "  - Your saved API key (if one was saved to Windows Credential Manager)"
+Write-Host "  - Your saved API key (if any) and the app's Windows Hello key"
 Write-Host "  - The Desktop shortcut"
 Write-Host ""
 Write-Host "PDFs you've already downloaded will NOT be deleted." -ForegroundColor Yellow
@@ -41,26 +39,11 @@ if ($confirm -notmatch "^[Yy]") {
 }
 
 Write-Step "Removing the saved API key"
-if (Test-Path $VenvPython) {
-    $accountId = $null
-    if (Test-Path $ConfigPath) {
-        try {
-            $accountId = (Get-Content $ConfigPath -Raw | ConvertFrom-Json).account_id
-        } catch { }
-    }
-    if ($accountId) {
-        $pyCode = @"
-import keyring
-try:
-    keyring.delete_password('FormSmarts PDF Downloader', '$accountId')
-except Exception:
-    pass
-"@
-        & $VenvPython -c $pyCode
-        Write-Host "Removed the saved API key for account $accountId (if it existed)."
-    } else {
-        Write-Host "No saved account ID found - nothing to remove."
-    }
+$AppExe = Join-Path $InstallDir "venv\Scripts\fs-pdf-downloader.exe"
+if (Test-Path $AppExe) {
+    # Removes the saved key from Credential Manager and the app's Windows
+    # Hello key.
+    & $AppExe --forget-key
 } else {
     Write-Host "No installed application found - nothing to remove."
 }

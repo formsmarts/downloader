@@ -1,15 +1,29 @@
 [project]
 name = "formsmarts-pdf-downloader"
-version = "1.0.0"
+version = "1.1.0"
 description = "Download FormSmarts submission PDFs between two dates."
-requires-python = ">=3.8"
+readme = "README.md"
+requires-python = ">=3.9"
 dependencies = [
     "formsmarts>=2.1",
     "keyring>=24.0",
+    # Windows Hello protected key storage
+    "cryptography>=42; sys_platform == 'win32'",
+    "winrt-runtime>=2.0; sys_platform == 'win32'",
+    "winrt-Windows.Foundation>=2.0; sys_platform == 'win32'",
+    "winrt-Windows.Security.Credentials>=2.0; sys_platform == 'win32'",
+    "winrt-Windows.Security.Cryptography>=2.0; sys_platform == 'win32'",
+    "winrt-Windows.Storage.Streams>=2.0; sys_platform == 'win32'",
+    # macOS Touch ID protected key storage (signed app builds)
+    "pyobjc-framework-Security>=10.0; sys_platform == 'darwin'",
+    "pyobjc-framework-LocalAuthentication>=10.0; sys_platform == 'darwin'",
 ]
 
 [project.scripts]
 fs-pdf-downloader = "formsmarts_pdf_downloader.cli:main"
+
+[project.gui-scripts]
+fs-pdf-downloader-gui = "formsmarts_pdf_downloader.gui:main"
 
 [tool.setuptools]
 packages = ["formsmarts_pdf_downloader"]
