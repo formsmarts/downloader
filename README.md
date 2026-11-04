@@ -23,7 +23,7 @@ On first launch, fill in **Settings**:
   found under *Account Overview* in your FormSmarts account.
 - **API key:** found under *Security Settings* in your FormSmarts account.
 
-Then enter a **Form ID** and a date range and click **Download PDFs**.
+Then enter a **Form ID** and a date range and click **Download**.
 
 ## Where your API key is stored
 

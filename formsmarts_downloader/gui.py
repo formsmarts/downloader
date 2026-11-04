@@ -10,6 +10,7 @@ import subprocess
 import sys
 import threading
 import tkinter as tk
+import webbrowser
 from datetime import date
 from pathlib import Path
 from tkinter import filedialog, messagebox, simpledialog, ttk
@@ -26,6 +27,8 @@ PAD = 8
 
 
 ASSETS = Path(__file__).resolve().parent / "assets"
+ACCOUNT_URL = "https://formsmarts.com/account/view#overview"
+API_KEY_URL = "https://formsmarts.com/account/view#security-settings"
 
 
 def _check_date(widget, label: str) -> date:
@@ -35,6 +38,18 @@ def _check_date(widget, label: str) -> date:
             "{} isn't a valid date. Enter it like this: {}".format(label, datefield.example())
         )
     return d
+
+
+def _link(parent, text: str, url: str) -> ttk.Label:
+    """A label that opens `url` in the browser when clicked."""
+    try:
+        color = "systemLinkColor" if sys.platform == "darwin" else "#0066cc"
+        parent.winfo_rgb(color)
+    except tk.TclError:
+        color = "#0066cc"
+    label = ttk.Label(parent, text=text, foreground=color, cursor="hand2")
+    label.bind("<Button-1>", lambda _e: webbrowser.open(url))
+    return label
 
 
 def _open_folder(path: Path) -> None:
@@ -97,19 +112,16 @@ class App(ttk.Frame):
         )
         ttk.Button(settings, text="Browse…", command=self._browse).grid(row=0, column=2, pady=2)
 
-        ttk.Label(settings, text="Account ID").grid(row=1, column=0, sticky="w", pady=2)
+        _link(settings, "Account ID", ACCOUNT_URL).grid(row=1, column=0, sticky="w", pady=2)
         ttk.Entry(settings, textvariable=self.account_var, width=20).grid(
             row=1, column=1, sticky="w", padx=PAD, pady=2
         )
-        ttk.Label(settings, text="e.g. FSA-123456 (Account Overview)", foreground="gray").grid(
-            row=1, column=1, columnspan=2, sticky="e", pady=2
-        )
 
-        ttk.Label(settings, text="API key").grid(row=2, column=0, sticky="w", pady=2)
-        ttk.Entry(settings, textvariable=self.key_var, show="•").grid(
-            row=2, column=1, sticky="ew", padx=PAD, pady=2
-        )
+        _link(settings, "API key", API_KEY_URL).grid(row=2, column=0, sticky="w", pady=2)
+        self.key_entry = ttk.Entry(settings, textvariable=self.key_var, show="•")
+        self.key_entry.grid(row=2, column=1, sticky="ew", padx=PAD, pady=2)
         self.key_var.trace_add("write", lambda *_: self._refresh_key_status())
+        self.account_var.trace_add("write", lambda *_: self._refresh_key_status())
 
         storage = ttk.Frame(settings)
         storage.grid(row=3, column=1, columnspan=2, sticky="w", padx=PAD, pady=(4, 0))
@@ -153,7 +165,7 @@ class App(ttk.Frame):
 
         buttons = ttk.Frame(dl)
         buttons.grid(row=2, column=0, columnspan=6, sticky="ew", pady=(PAD, 0))
-        self.download_btn = ttk.Button(buttons, text="Download PDFs", command=self._start)
+        self.download_btn = ttk.Button(buttons, text="Download", command=self._start)
         self.download_btn.pack(side="left")
         self.cancel_btn = ttk.Button(buttons, text="Cancel", command=self._cancel, state="disabled")
         self.cancel_btn.pack(side="left", padx=PAD)
@@ -186,30 +198,41 @@ class App(ttk.Frame):
 
     def _refresh_key_status(self):
         # Never display the full key: only its last characters (mask_key).
-        typed = self.key_var.get().strip()
         mask = secrets_store.mask_key
+        account = config_mod.normalize_account_id(self.account_var.get())
         protected = self.mode_var.get() == secrets_store.MODE_PROTECTED
+
+        # A saved key can't be edited; the field unlocks when the Account ID
+        # is changed (or the key is no longer saved).
+        saved = (
+            bool(account)
+            and account == self.cfg.get("account_id")
+            and secrets_store.effective_mode(self.cfg) == secrets_store.MODE_PROTECTED
+            and secrets_store.has_saved_key(account)
+        )
+        if saved:
+            if self.key_var.get():
+                self.key_var.set("")  # re-enters this method
+                return
+            self.key_entry.configure(state="disabled")
+            if self.session_key:
+                self.key_status_var.set("Saved key: {}".format(mask(self.session_key)))
+            else:
+                self.key_status_var.set("A key is saved, it's unlocked when you press Download.")
+            return
+        self.key_entry.configure(state="normal")
+
+        typed = self.key_var.get().strip()
         if typed:
             self.key_status_var.set(
                 "Key entered: {}{}".format(mask(typed), "  (click Save settings)" if protected else "")
             )
-        elif self.session_key:
-            if protected and secrets_store.effective_mode(self.cfg) == secrets_store.MODE_PROTECTED:
-                self.key_status_var.set("Saved key: {}".format(mask(self.session_key)))
-            else:
-                self.key_status_var.set(
-                    "Key {} kept in memory for this session only.".format(mask(self.session_key))
-                )
+        elif self.session_key and account == self.cfg.get("account_id"):
+            self.key_status_var.set(
+                "Key {} kept in memory for this session only.".format(mask(self.session_key))
+            )
         elif protected:
-            account = config_mod.normalize_account_id(self.account_var.get())
-            if account and secrets_store.has_saved_key(account):
-                self.key_status_var.set(
-                    "A key is saved; it's unlocked with {} when you download.".format(
-                        secrets_store.protection_name()
-                    )
-                )
-            else:
-                self.key_status_var.set("Enter your API key and click Save settings.")
+            self.key_status_var.set("Enter your API key and click Save settings.")
         else:
             self.key_status_var.set("You'll be asked for the key when downloading.")
 
