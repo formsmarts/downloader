@@ -59,7 +59,7 @@ def _choose_storage(cfg: dict) -> str:
 def run_configure_wizard():
     cfg = config_mod.load_config()
 
-    print("=== FormSmarts PDF Downloader - Configuration ===")
+    print("=== FormSmarts Downloader - Configuration ===")
     print()
 
     current_dir = cfg["download_directory"]
@@ -279,7 +279,7 @@ def cmd_download(args):
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="fs-pdf-downloader",
+        prog="fs-downloader",
         description="Download FormSmarts submission PDFs between two dates.",
     )
     parser.add_argument(

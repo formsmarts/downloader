@@ -4,8 +4,8 @@
     python packaging/build.py
 
 Output:
-  Windows: dist/FormSmarts PDF Downloader.exe  (single file)
-  macOS:   dist/FormSmarts PDF Downloader.app
+  Windows: dist/FormSmarts Downloader.exe  (single file)
+  macOS:   dist/FormSmarts Downloader.app
 
 PyInstaller can't cross-compile: build the Windows app on Windows and the
 macOS app on a Mac (the GitHub Actions workflow does both).
@@ -27,10 +27,10 @@ import PyInstaller.__main__
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from formsmarts_pdf_downloader import __version__  # noqa: E402
+from formsmarts_downloader import __version__  # noqa: E402
 
-APP_NAME = "FormSmarts PDF Downloader"
-BUNDLE_ID = os.environ.get("MACOS_BUNDLE_ID") or "com.formsmarts.pdfdownloader"
+APP_NAME = "FormSmarts Downloader"
+BUNDLE_ID = os.environ.get("MACOS_BUNDLE_ID") or "com.formsmarts.downloader"
 
 
 def main():
@@ -44,19 +44,19 @@ def main():
         "--workpath", str(ROOT / "build"),
         "--specpath", str(ROOT / "build"),
         # Imported lazily; list explicitly so they're always bundled.
-        "--hidden-import", "formsmarts_pdf_downloader.downloader",
+        "--hidden-import", "formsmarts_downloader.downloader",
         "--collect-submodules", "keyring.backends",
     ]
     if sys.platform == "win32":
         args += [
             "--onefile",
-            "--hidden-import", "formsmarts_pdf_downloader._win_hello",
+            "--hidden-import", "formsmarts_downloader._win_hello",
             "--collect-submodules", "winrt",
         ]
     elif sys.platform == "darwin":
         args += [
             "--osx-bundle-identifier", BUNDLE_ID,
-            "--hidden-import", "formsmarts_pdf_downloader._mac_keychain",
+            "--hidden-import", "formsmarts_downloader._mac_keychain",
         ]
         identity = os.environ.get("MACOS_SIGN_IDENTITY")
         if identity:

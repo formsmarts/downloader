@@ -22,7 +22,7 @@ import os
 import threading
 import time
 
-HELLO_KEY_NAME = "FormSmartsPDFDownloader"
+HELLO_KEY_NAME = "FormSmartsDownloader"
 PREFIX = "fshello1:"
 _AAD = PREFIX.encode()
 
@@ -124,7 +124,7 @@ async def _sign(challenge: bytes, create: bool) -> bytes:
 
 
 def _aes_key(signature: bytes) -> bytes:
-    return hashlib.sha256(b"FormSmartsPDFDownloader/v1" + signature).digest()
+    return hashlib.sha256(b"FormSmartsDownloader/v1" + signature).digest()
 
 
 def seal(api_key: str) -> str:

@@ -11,14 +11,17 @@ The user chooses one of two modes:
                  - Windows: see _win_hello.py
                  - macOS:   see _mac_keychain.py (signed app builds only)
 
-The key is never written to the plain-text config file. Earlier versions
-saved it unprotected in the OS credential store; take_legacy_key() reads
-and removes such an entry so it can be migrated.
+The key is never written to the plain-text config file. Version 1.0 saved
+it unprotected in the OS credential store; take_legacy_key() reads and
+removes such an entry so it can be migrated.
 """
 
 import sys
 
-SERVICE_NAME = "FormSmarts PDF Downloader"
+SERVICE_NAME = "FormSmarts Downloader"
+# Credential name used by version 1.0 ("FormSmarts PDF Downloader"), which
+# saved the key unprotected.
+LEGACY_SERVICE_NAME = "FormSmarts PDF Downloader"
 
 MODE_NONE = "none"
 MODE_PROTECTED = "protected"
@@ -166,6 +169,7 @@ def delete_api_key(account_id: str) -> None:
         except ImportError:
             pass
     _keyring_delete(account_id)
+    _keyring_delete(account_id, LEGACY_SERVICE_NAME)
 
 
 def forget_everything(account_id: str) -> None:
@@ -181,19 +185,13 @@ def forget_everything(account_id: str) -> None:
 
 
 def take_legacy_key(account_id: str):
-    """Read and delete an unprotected key saved by an earlier version."""
+    """Read and delete an unprotected key saved by version 1.0."""
     if not account_id:
         return None
-    value = _keyring_get(account_id)
-    if not value:
-        return None
-    if sys.platform == "win32":
-        from . import _win_hello
-
-        if value.startswith(_win_hello.PREFIX):
-            return None
-    _keyring_delete(account_id)
-    return value
+    value = _keyring_get(account_id, LEGACY_SERVICE_NAME)
+    if value:
+        _keyring_delete(account_id, LEGACY_SERVICE_NAME)
+    return value or None
 
 
 # ---------------------------------------------------------------- keyring
@@ -213,12 +211,12 @@ def _keyring():
     return keyring
 
 
-def _keyring_get(account_id):
+def _keyring_get(account_id, service=SERVICE_NAME):
     kr = _keyring()
     if kr is None:
         return None
     try:
-        return kr.get_password(SERVICE_NAME, account_id)
+        return kr.get_password(service, account_id)
     except Exception:
         return None
 
@@ -233,11 +231,11 @@ def _keyring_set(account_id, value):
         raise KeyStoreError(str(e)) from e
 
 
-def _keyring_delete(account_id):
+def _keyring_delete(account_id, service=SERVICE_NAME):
     kr = _keyring()
     if kr is None:
         return
     try:
-        kr.delete_password(SERVICE_NAME, account_id)
+        kr.delete_password(service, account_id)
     except Exception:
         pass

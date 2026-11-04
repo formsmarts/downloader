@@ -1,10 +1,10 @@
 #Requires -Version 5.1
 <#
-  Removes FormSmarts PDF Downloader from the current Windows user account:
+  Removes FormSmarts Downloader from the current Windows user account:
     - The private virtual environment / installed application
-      (%LOCALAPPDATA%\FormSmartsPDFDownloader)
+      (%LOCALAPPDATA%\FormSmartsDownloader)
     - Saved settings (download folder, account ID)
-      (%APPDATA%\FormSmartsPDFDownloader)
+      (%APPDATA%\FormSmartsDownloader)
     - The saved API key (Windows Credential Manager) and Windows Hello key
     - The Desktop shortcut
 
@@ -14,17 +14,23 @@
 
 $ErrorActionPreference = "Stop"
 
-$InstallDir   = Join-Path $env:LOCALAPPDATA "FormSmartsPDFDownloader"
-$ConfigDir    = Join-Path $env:APPDATA "FormSmartsPDFDownloader"
+$InstallDir   = Join-Path $env:LOCALAPPDATA "FormSmartsDownloader"
+$ConfigDir    = Join-Path $env:APPDATA "FormSmartsDownloader"
 $DesktopDir   = [Environment]::GetFolderPath("Desktop")
-$LauncherPath = Join-Path $DesktopDir "FormSmarts PDF Downloader.bat"
+$LauncherPath = Join-Path $DesktopDir "FormSmarts Downloader.bat"
+# Version 1.0 was named "FormSmarts PDF Downloader".
+$LegacyPaths  = @(
+    (Join-Path $env:LOCALAPPDATA "FormSmartsPDFDownloader"),
+    (Join-Path $env:APPDATA "FormSmartsPDFDownloader"),
+    (Join-Path $DesktopDir "FormSmarts PDF Downloader.bat")
+)
 
 function Write-Step($msg) {
     Write-Host ""
     Write-Host "==> $msg" -ForegroundColor Cyan
 }
 
-Write-Host "This will remove FormSmarts PDF Downloader from this computer:"
+Write-Host "This will remove FormSmarts Downloader from this computer:"
 Write-Host "  - The application and its private Python environment"
 Write-Host "  - Your saved download folder / account ID settings"
 Write-Host "  - Your saved API key (if any) and the app's Windows Hello key"
@@ -39,7 +45,7 @@ if ($confirm -notmatch "^[Yy]") {
 }
 
 Write-Step "Removing the saved API key"
-$AppExe = Join-Path $InstallDir "venv\Scripts\fs-pdf-downloader.exe"
+$AppExe = Join-Path $InstallDir "venv\Scripts\fs-downloader.exe"
 if (Test-Path $AppExe) {
     # Removes the saved key from Credential Manager and the app's Windows
     # Hello key.
@@ -73,5 +79,12 @@ if (Test-Path $LauncherPath) {
     Write-Host "(if you moved or renamed it, delete it manually)"
 }
 
+foreach ($path in $LegacyPaths) {
+    if (Test-Path $path) {
+        Remove-Item $path -Recurse -Force
+        Write-Host "Removed (previous version): $path"
+    }
+}
+
 Write-Step "Uninstall complete"
-Write-Host "FormSmarts PDF Downloader has been removed from this computer."
+Write-Host "FormSmarts Downloader has been removed from this computer."

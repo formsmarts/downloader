@@ -1,7 +1,7 @@
 [project]
-name = "formsmarts-pdf-downloader"
+name = "formsmarts-downloader"
 version = "1.1.0"
-description = "Download FormSmarts submission PDFs between two dates."
+description = "Download your FormSmarts form submissions."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
@@ -20,13 +20,13 @@ dependencies = [
 ]
 
 [project.scripts]
-fs-pdf-downloader = "formsmarts_pdf_downloader.cli:main"
+fs-downloader = "formsmarts_downloader.cli:main"
 
 [project.gui-scripts]
-fs-pdf-downloader-gui = "formsmarts_pdf_downloader.gui:main"
+fs-downloader-gui = "formsmarts_downloader.gui:main"
 
 [tool.setuptools]
-packages = ["formsmarts_pdf_downloader"]
+packages = ["formsmarts_downloader"]
 
 [build-system]
 requires = ["setuptools>=61.0"]

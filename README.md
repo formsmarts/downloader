@@ -1,4 +1,4 @@
-# FormSmarts PDF Downloader
+# FormSmarts Downloader
 
 Downloads the PDF version of your [FormSmarts](https://formsmarts.com) form
 submissions, for a form and date range you choose, into a folder on your
@@ -11,10 +11,10 @@ It comes as a desktop app for Windows and macOS, and as a command-line tool.
 Download the latest version from the
 [Releases](https://github.com/formsmarts/downloader/releases) page:
 
-- **Windows:** `FormSmarts PDF Downloader.exe`. Double-click it to run it.
+- **Windows:** `FormSmarts Downloader.exe`. Double-click it to run it.
   No installation is needed.
-- **macOS:** `FormSmarts-PDF-Downloader-macOS.zip`. Unzip it and drag
-  **FormSmarts PDF Downloader** into your Applications folder.
+- **macOS:** `FormSmarts-Downloader-macOS.zip`. Unzip it and drag
+  **FormSmarts Downloader** into your Applications folder.
 
 On first launch, fill in **Settings**:
 
@@ -70,10 +70,10 @@ Requires Python 3.9+.
     source .venv/bin/activate          # Windows: .venv\Scripts\activate
     pip install .
 
-    fs-pdf-downloader --configure       # one-time setup
-    fs-pdf-downloader                   # interactive download
-    fs-pdf-downloader --form-id lqh --start-date 2026-01-01 --end-date 2026-01-31
-    fs-pdf-downloader --forget-key      # delete the saved API key
+    fs-downloader --configure       # one-time setup
+    fs-downloader                   # interactive download
+    fs-downloader --form-id lqh --start-date 2026-01-01 --end-date 2026-01-31
+    fs-downloader --forget-key      # delete the saved API key
 
 The command-line tool shares settings with the desktop app. On Windows it
 can use Windows Hello. On macOS, Touch ID storage is only available to the
@@ -81,15 +81,15 @@ signed desktop app, so the command-line tool asks for the key each time.
 
 Settings (download folder, account ID) are saved to:
 
-- Windows: `%APPDATA%\FormSmartsPDFDownloader\config.json`
-- macOS: `~/Library/Application Support/FormSmartsPDFDownloader/config.json`
-- Linux: `~/.config/FormSmartsPDFDownloader/config.json`
+- Windows: `%APPDATA%\FormSmartsDownloader\config.json`
+- macOS: `~/Library/Application Support/FormSmartsDownloader/config.json`
+- Linux: `~/.config/FormSmartsDownloader/config.json`
 
 ### Windows install script
 
 As an alternative to the desktop app, `windows\install.bat` sets up the
 command-line tool for the current user: it installs Python if needed,
-creates a private environment, and adds a *FormSmarts PDF Downloader*
+creates a private environment, and adds a *FormSmarts Downloader*
 shortcut to the Desktop. `windows\uninstall.bat` removes it, along with
 your saved settings and API key. PDFs you've downloaded are not deleted.
 

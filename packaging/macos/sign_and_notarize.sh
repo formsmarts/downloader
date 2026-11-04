@@ -7,18 +7,18 @@
 #   MACOS_PROVISIONING_PROFILE  path to the Developer ID provisioning profile.
 #                               Needed for Touch ID key storage; without it the
 #                               app is signed but only offers "don't save".
-#   MACOS_BUNDLE_ID             default: com.formsmarts.pdfdownloader
+#   MACOS_BUNDLE_ID             default: com.formsmarts.downloader
 #   NOTARY_KEY_PATH, NOTARY_API_KEY_ID, NOTARY_API_ISSUER_ID
 #                               App Store Connect API key (.p8 path) for
 #                               notarization; skipped if unset.
 set -euo pipefail
 
 : "${MACOS_SIGN_IDENTITY:?}"
-BUNDLE_ID="${MACOS_BUNDLE_ID:-com.formsmarts.pdfdownloader}"
+BUNDLE_ID="${MACOS_BUNDLE_ID:-com.formsmarts.downloader}"
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-APP="$ROOT/dist/FormSmarts PDF Downloader.app"
-ZIP="$ROOT/dist/FormSmarts-PDF-Downloader-macOS.zip"
+APP="$ROOT/dist/FormSmarts Downloader.app"
+ZIP="$ROOT/dist/FormSmarts-Downloader-macOS.zip"
 ENTITLEMENTS="$ROOT/build/entitlements.plist"
 SIGN_ARGS=(--force --options runtime --timestamp --sign "$MACOS_SIGN_IDENTITY")
 

@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 <#
-  Installs (or updates) FormSmarts PDF Downloader for the current Windows
+  Installs (or updates) FormSmarts Downloader for the current Windows
   user. Safe to re-run at any time - it will download Python only if it
   isn't already usable, and will always refresh the app's module
   dependencies.
@@ -9,11 +9,11 @@
     1. Locates a usable Python 3.9+, installing it (via winget, or the
        official python.org installer) if none is found.
     2. Creates a private virtual environment under
-       %LOCALAPPDATA%\FormSmartsPDFDownloader\venv
+       %LOCALAPPDATA%\FormSmartsDownloader\venv
     3. Installs the application and its dependencies (formsmarts, keyring, Windows Hello support)
        into that virtual environment via pip - never system-wide, and
        never relying on the current working directory to find the app.
-    4. Creates a "FormSmarts PDF Downloader" shortcut on the Desktop that
+    4. Creates a "FormSmarts Downloader" shortcut on the Desktop that
        runs the installed console-script entry point directly.
 #>
 
@@ -25,12 +25,15 @@ $PythonInstallerUrl = "https://www.python.org/ftp/python/$PythonInstallerVersion
 
 $ScriptDir     = $PSScriptRoot
 $AppSourceDir  = Split-Path -Parent $ScriptDir
-$InstallDir    = Join-Path $env:LOCALAPPDATA "FormSmartsPDFDownloader"
+$InstallDir    = Join-Path $env:LOCALAPPDATA "FormSmartsDownloader"
 $VenvDir       = Join-Path $InstallDir "venv"
 $VenvPython    = Join-Path $VenvDir "Scripts\python.exe"
-$AppExe        = Join-Path $VenvDir "Scripts\fs-pdf-downloader.exe"
+$AppExe        = Join-Path $VenvDir "Scripts\fs-downloader.exe"
 $DesktopDir    = [Environment]::GetFolderPath("Desktop")
-$LauncherPath  = Join-Path $DesktopDir "FormSmarts PDF Downloader.bat"
+$LauncherPath  = Join-Path $DesktopDir "FormSmarts Downloader.bat"
+# Version 1.0 was named "FormSmarts PDF Downloader".
+$LegacyInstallDir   = Join-Path $env:LOCALAPPDATA "FormSmartsPDFDownloader"
+$LegacyLauncherPath = Join-Path $DesktopDir "FormSmarts PDF Downloader.bat"
 
 function Write-Step($msg) {
     Write-Host ""
@@ -128,6 +131,13 @@ function Install-Python {
 
 # ---------------------------------------------------------------------------
 
+if ((Test-Path $LegacyInstallDir) -or (Test-Path $LegacyLauncherPath)) {
+    Write-Step "Removing the previous version (FormSmarts PDF Downloader)"
+    # Settings and the saved API key are migrated by the app itself.
+    Remove-Item $LegacyInstallDir -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item $LegacyLauncherPath -Force -ErrorAction SilentlyContinue
+}
+
 Write-Step "Looking for Python"
 $python = Find-ExistingPython
 if (-not $python) {
@@ -159,7 +169,7 @@ pause
 Write-Host "Created: $LauncherPath"
 
 Write-Step "Installation complete"
-Write-Host "You can now double-click 'FormSmarts PDF Downloader' on your Desktop"
+Write-Host "You can now double-click 'FormSmarts Downloader' on your Desktop"
 Write-Host "any time you want to download submission PDFs."
 Write-Host ""
 

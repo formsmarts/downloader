@@ -1,4 +1,4 @@
-"""Tkinter desktop UI for FormSmarts PDF Downloader.
+"""Tkinter desktop UI for FormSmarts Downloader.
 
 Uses the same config file, OS secret store and download logic as the CLI,
 so settings saved from either one are shared.
@@ -19,7 +19,7 @@ from . import __version__
 from . import config as config_mod
 from . import secrets_store
 
-APP_TITLE = "FormSmarts PDF Downloader"
+APP_TITLE = "FormSmarts Downloader"
 POLL_MS = 100
 PAD = 8
 

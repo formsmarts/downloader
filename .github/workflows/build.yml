@@ -89,8 +89,8 @@ jobs:
       - name: Package unsigned build
         if: env.HAS_SIGNING != 'true'
         run: |
-          ditto -c -k --keepParent "dist/FormSmarts PDF Downloader.app" \
-            dist/FormSmarts-PDF-Downloader-macOS-unsigned.zip
+          ditto -c -k --keepParent "dist/FormSmarts Downloader.app" \
+            dist/FormSmarts-Downloader-macOS-unsigned.zip
 
       - uses: actions/upload-artifact@v4
         with:

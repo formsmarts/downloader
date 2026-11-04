@@ -9,10 +9,13 @@ unprotected and gets migrated).
 import json
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
 
-APP_NAME = "FormSmartsPDFDownloader"
+APP_NAME = "FormSmartsDownloader"
+# Settings folder used by version 1.0 ("FormSmarts PDF Downloader").
+LEGACY_APP_NAME = "FormSmartsPDFDownloader"
 
 ACCOUNT_ID_RE = re.compile(r"^FSA-\d+$")
 
@@ -22,16 +25,34 @@ DEFAULTS = {
 }
 
 
-def config_dir() -> Path:
+def _config_base() -> Path:
     if sys.platform == "win32":
-        base = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
-    elif sys.platform == "darwin":
-        base = str(Path.home() / "Library" / "Application Support")
-    else:
-        base = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
-    path = Path(base) / APP_NAME
+        return Path(os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming"))
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support"
+    return Path(os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config"))
+
+
+def config_dir() -> Path:
+    path = _config_base() / APP_NAME
     path.mkdir(parents=True, exist_ok=True)
+    _migrate_legacy_dir(path)
     return path
+
+
+def _migrate_legacy_dir(path: Path) -> None:
+    """Move settings saved by version 1.0 into the current folder."""
+    legacy = _config_base() / LEGACY_APP_NAME
+    legacy_file = legacy / "config.json"
+    target = path / "config.json"
+    if target.exists() or not legacy_file.exists():
+        return
+    try:
+        shutil.copy2(legacy_file, target)
+        legacy_file.unlink()
+        legacy.rmdir()  # only succeeds if nothing else is left in it
+    except OSError:
+        pass
 
 
 def config_path() -> Path:
