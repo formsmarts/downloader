@@ -126,6 +126,8 @@ class App(ttk.Frame):
             self.key_entry.bind(event, self._refresh_key_status, add="+")
         self.key_var.trace_add("write", lambda *_: self._refresh_key_status())
         self.account_var.trace_add("write", lambda *_: self._refresh_key_status())
+        self.dir_var.trace_add("write", lambda *_: self._update_save_button())
+        self.mode_var.trace_add("write", lambda *_: self._refresh_key_status())
 
         storage = ttk.Frame(settings)
         storage.grid(row=3, column=1, columnspan=2, sticky="w", padx=PAD, pady=(4, 0))
@@ -245,6 +247,7 @@ class App(ttk.Frame):
             self.key_status_var.set("Enter your API key and click Save settings.")
         else:
             self.key_status_var.set("You'll be asked for the key when downloading.")
+        self._update_save_button()
 
     def _run_bg(self, fn, done):
         """Run fn() off the UI thread (OS verification prompts block), then
@@ -270,10 +273,25 @@ class App(ttk.Frame):
 
         self.after(POLL_MS, poll)
 
+    def _settings_changed(self) -> bool:
+        """Whether anything in Settings differs from what's saved."""
+        return (
+            self.dir_var.get().strip() != (self.cfg.get("download_directory") or "")
+            or config_mod.normalize_account_id(self.account_var.get())
+            != (self.cfg.get("account_id") or "")
+            or self.mode_var.get() != secrets_store.effective_mode(self.cfg)
+            or bool(self.key_var.get().strip())
+        )
+
+    def _update_save_button(self):
+        if hasattr(self, "save_btn"):
+            changed = not self.busy and self._settings_changed()
+            self.save_btn.configure(state="normal" if changed else "disabled")
+
     def _set_busy(self, busy: bool):
         self.busy = busy
         state = "disabled" if busy else "normal"
-        self.save_btn.configure(state=state)
+        self._update_save_button()
         if not (self.worker and self.worker.is_alive()):
             self.download_btn.configure(state=state)
 
@@ -308,6 +326,7 @@ class App(ttk.Frame):
         self.cfg["account_id"] = account
         self.cfg.setdefault("key_storage", secrets_store.MODE_NONE)
         config_mod.save_config(self.cfg)
+        self._refresh_key_status()
         return True
 
     def _save_settings(self):
