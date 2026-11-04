@@ -7,6 +7,17 @@ import time
 from datetime import date
 from pathlib import Path
 
+# Verify HTTPS certificates with the operating system's trust store
+# (macOS Keychain, Windows certificate store). Python's bundled OpenSSL has
+# no CA certificates of its own in the packaged app, and this also honors
+# certificates installed by the user's organization.
+try:
+    import truststore
+
+    truststore.inject_into_ssl()
+except ImportError:  # Python < 3.10: use OpenSSL's defaults
+    pass
+
 try:
     import formsmarts
     from formsmarts import (

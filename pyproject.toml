@@ -7,6 +7,8 @@ requires-python = ">=3.9"
 dependencies = [
     "formsmarts>=2.1.7",  # set_user_agent()
     "keyring>=24.0",
+    # Verify HTTPS with the OS trust store (the packaged app has no CA bundle)
+    "truststore>=0.10; python_version >= '3.10'",
     # Windows Hello protected key storage
     "cryptography>=42; sys_platform == 'win32'",
     "winrt-runtime>=2.0; sys_platform == 'win32'",

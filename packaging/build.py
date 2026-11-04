@@ -46,6 +46,7 @@ def main():
         # Imported lazily; list explicitly so they're always bundled.
         "--hidden-import", "formsmarts_downloader.downloader",
         "--collect-submodules", "keyring.backends",
+        "--hidden-import", "truststore",
         "--add-data", "{}{}formsmarts_downloader/assets".format(
             ROOT / "formsmarts_downloader" / "assets", os.pathsep
         ),
