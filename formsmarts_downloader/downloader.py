@@ -1,11 +1,14 @@
 """Core download logic built on the FormSmarts API client."""
 
+import platform
 import re
+import sys
 import time
 from datetime import date
 from pathlib import Path
 
 try:
+    import formsmarts
     from formsmarts import (
         APIAuthenticator,
         FormEntry,
@@ -20,6 +23,31 @@ except ImportError as e:
         "  pip install -r requirements.txt\n"
         "or run windows\\install.bat to set up everything automatically."
     ) from e
+
+from . import __version__
+
+USER_AGENT_APP_NAME = "FormSmarts-Downloader"
+
+
+def _os_description() -> str:
+    if sys.platform == "darwin":
+        return "macOS {}".format(platform.mac_ver()[0] or platform.release())
+    if sys.platform == "win32":
+        return "Windows {}".format(platform.release())
+    return "{} {}".format(platform.system() or "Unknown", platform.release())
+
+
+def identify_as(interface: str) -> None:
+    """Identify this app in the User-Agent of all API requests, like the
+    FormSmarts mobile apps do, e.g.
+    'FormSmarts-Downloader/1.2.0 (desktop app; macOS 26.7.1) formsmarts-python/2.1.7'.
+    `interface` is "desktop app" or "command line"."""
+    details = "{}; {}".format(interface, _os_description()).replace("(", "").replace(")", "")
+    try:
+        formsmarts.set_user_agent(USER_AGENT_APP_NAME, __version__, details)
+    except ValueError:
+        formsmarts.set_user_agent(USER_AGENT_APP_NAME, __version__)
+
 
 # Minimum delay between PDF download requests, so we don't hammer the API.
 THROTTLE_SECONDS = 0.1

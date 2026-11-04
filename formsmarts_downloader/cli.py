@@ -182,6 +182,7 @@ def cmd_download(args):
         from . import downloader
     except ImportError as e:
         raise SystemExit(str(e)) from e
+    downloader.identify_as("command line")
 
     cfg = config_mod.load_config()
     if not cfg.get("account_id"):

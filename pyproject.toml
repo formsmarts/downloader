@@ -5,7 +5,7 @@ description = "Download your FormSmarts form submissions."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "formsmarts>=2.1",
+    "formsmarts>=2.1.7",  # set_user_agent()
     "keyring>=24.0",
     # Windows Hello protected key storage
     "cryptography>=42; sys_platform == 'win32'",

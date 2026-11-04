@@ -464,6 +464,7 @@ class App(ttk.Frame):
         except ImportError as e:
             messagebox.showerror(APP_TITLE, str(e), parent=self.master)
             return
+        downloader.identify_as("desktop app")
 
         if self.busy or not self._save_basic_settings():
             return
