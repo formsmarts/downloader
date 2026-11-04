@@ -52,10 +52,16 @@ jobs:
         run: python -m pip install . pyinstaller
       - name: Build
         run: python packaging/build.py
+      - name: Name the executable after the version
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path formsmarts_downloader/__init__.py -Pattern '__version__ = "(.+)"').Matches[0].Groups[1].Value
+          Rename-Item "dist/FormSmarts Downloader.exe" "FormSmarts-Downloader-$version-windows-x64.exe"
       - uses: actions/upload-artifact@v4
         with:
           name: windows
           path: dist/*.exe
+          if-no-files-found: error
 
   macos:
     needs: version
@@ -119,16 +125,15 @@ jobs:
           NOTARY_API_ISSUER_ID: ${{ secrets.NOTARY_API_ISSUER_ID }}
         run: packaging/macos/sign_and_notarize.sh
 
-      - name: Package unsigned build
+      - name: Create unsigned DMG
         if: env.HAS_SIGNING != 'true'
-        run: |
-          ditto -c -k --keepParent "dist/FormSmarts Downloader.app" \
-            dist/FormSmarts-Downloader-macOS-unsigned.zip
+        run: packaging/macos/make_dmg.sh
 
       - uses: actions/upload-artifact@v4
         with:
           name: macos
-          path: dist/*.zip
+          path: dist/*.dmg
+          if-no-files-found: error
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')

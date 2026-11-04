@@ -1,5 +1,7 @@
 #!/bin/bash
-# Sign, notarize and package the macOS app built by packaging/build.py.
+# Sign the macOS app built by packaging/build.py, package it in a DMG
+# (make_dmg.sh), then sign, notarize and staple the DMG. Notarizing the DMG
+# covers the app inside it.
 #
 # Required:
 #   MACOS_SIGN_IDENTITY         Developer ID Application identity (name or SHA-1)
@@ -18,7 +20,6 @@ BUNDLE_ID="${MACOS_BUNDLE_ID:-com.formsmarts.Downloader}"
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 APP="$ROOT/dist/FormSmarts Downloader.app"
-ZIP="$ROOT/dist/FormSmarts-Downloader-macOS.zip"
 ENTITLEMENTS="$ROOT/build/entitlements.plist"
 SIGN_ARGS=(--force --options runtime --timestamp --sign "$MACOS_SIGN_IDENTITY")
 
@@ -44,17 +45,15 @@ fi
 codesign "${SIGN_ARGS[@]}" "$APP"
 codesign --verify --strict --verbose=2 "$APP"
 
-rm -f "$ZIP"
-ditto -c -k --keepParent "$APP" "$ZIP"
+DMG="$("$ROOT/packaging/macos/make_dmg.sh")"
+codesign --force --timestamp --sign "$MACOS_SIGN_IDENTITY" "$DMG"
 
 if [[ -n "${NOTARY_KEY_PATH:-}" ]]; then
-    xcrun notarytool submit "$ZIP" --wait \
+    xcrun notarytool submit "$DMG" --wait \
         --key "$NOTARY_KEY_PATH" --key-id "$NOTARY_API_KEY_ID" --issuer "$NOTARY_API_ISSUER_ID"
-    xcrun stapler staple "$APP"
-    rm -f "$ZIP"
-    ditto -c -k --keepParent "$APP" "$ZIP"
-    spctl --assess --type execute --verbose "$APP"
+    xcrun stapler staple "$DMG"
+    spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
 else
     echo "NOTARY_KEY_PATH not set: skipping notarization."
 fi
-echo "Built $ZIP"
+echo "Built $DMG"

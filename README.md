@@ -11,10 +11,10 @@ It comes as a desktop app for Windows and macOS, and as a command-line tool.
 Download the latest version from the
 [Releases](https://github.com/formsmarts/downloader/releases) page:
 
-- **Windows:** `FormSmarts Downloader.exe`. Double-click it to run it.
-  No installation is needed.
-- **macOS:** `FormSmarts-Downloader-macOS.zip`. Unzip it and drag
-  **FormSmarts Downloader** into your Applications folder.
+- **Windows:** `FormSmarts-Downloader-<version>-windows-x64.exe`.
+  Double-click it to run it. No installation is needed.
+- **macOS** (Apple Silicon): `FormSmarts-Downloader-<version>-macos-arm64.dmg`.
+  Open it and drag **FormSmarts Downloader** onto the Applications folder.
 
 On first launch, fill in **Settings**:
 
