@@ -36,13 +36,14 @@ You choose one of two options:
 
 The API key is never written to the settings file.
 
-- **Windows:** the key is encrypted with a key derived from a Windows Hello
-  credential (held by your computer's TPM) and stored in Windows
-  Credential Manager. Requires Windows Hello to be set up
+- **Windows:** the key is locked with Windows Hello, the same PIN,
+  fingerprint or face recognition you use to sign in to Windows. Windows
+  keeps the unlocking key in security hardware built into your computer
+  and blocks repeated wrong guesses. Windows Hello needs to be set up
   (*Settings → Accounts → Sign-in options*).
-- **macOS:** the key is stored in the system keychain with a
-  Touch ID / password requirement, and never leaves this Mac. Requires the
-  signed app from the Releases page.
+- **macOS:** the key is stored in your Mac's keychain (where macOS keeps
+  your passwords), locked with Touch ID or your Mac password. It never
+  leaves this Mac. This requires the app from the Releases page.
 
 If neither is available, the app only offers the first option.
 
@@ -91,45 +92,6 @@ command-line tool for the current user: it installs Python if needed,
 creates a private environment, and adds a *FormSmarts PDF Downloader*
 shortcut to the Desktop. `windows\uninstall.bat` removes it, along with
 your saved settings and API key. PDFs you've downloaded are not deleted.
-
-## Building the desktop app
-
-Builds run on GitHub Actions (`.github/workflows/build.yml`) when a `v*`
-tag is pushed, producing a draft release with both apps. To build locally:
-
-    pip install . pyinstaller
-    python packaging/build.py
-
-PyInstaller can't cross-compile, so the Windows app has to be built on
-Windows and the macOS app on a Mac.
-
-### macOS signing
-
-Touch ID key storage only works in an app signed with a Developer ID and an
-embedded provisioning profile. To set that up:
-
-1. In the Apple Developer portal, register the App ID
-   `com.formsmarts.pdfdownloader` and create a **Developer ID**
-   provisioning profile for it.
-2. Add these repository secrets:
-
-   | Secret | Value |
-   | --- | --- |
-   | `MACOS_CERT_P12` | base64 of the *Developer ID Application* certificate + key (.p12) |
-   | `MACOS_CERT_PASSWORD` | password of the .p12 |
-   | `MACOS_SIGN_IDENTITY` | the identity name, e.g. `Developer ID Application: <Name> (<TEAMID>)` |
-   | `APPLE_TEAM_ID` | your team ID |
-   | `MACOS_PROVISIONING_PROFILE` | base64 of the provisioning profile |
-   | `NOTARY_KEY` | base64 of an App Store Connect API key (.p8), for notarization |
-   | `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID` | that API key's ID and issuer ID |
-
-Without these secrets, the workflow produces an unsigned macOS build. It
-runs, but only offers the "don't save" option, and macOS warns that it
-comes from an unidentified developer.
-
-To sign locally, set the same values as environment variables
-(`MACOS_PROVISIONING_PROFILE` and `NOTARY_KEY_PATH` as file paths), run
-`packaging/build.py`, then `packaging/macos/sign_and_notarize.sh`.
 
 ## Support
 
