@@ -1,3 +1,13 @@
+# Builds the desktop app for macOS (Apple Silicon) and Windows.
+#
+# - Run manually (Actions > Build desktop apps > Run workflow): builds both apps and attaches them
+#   to the run as artifacts.
+# - Push a version tag, e.g. "v1.2.0": also creates a draft GitHub Release with both apps attached.
+#   The tag must match __version__ in formsmarts_downloader/__init__.py (and pyproject.toml).
+#
+# The macOS app is signed and notarized only if the MACOS_* and NOTARY_* secrets are set;
+# otherwise it is built unsigned. The Windows app isn't signed.
+
 name: Build desktop apps
 
 on:
@@ -8,14 +18,36 @@ on:
 permissions:
   contents: read
 
+env:
+  PYTHON_VERSION: "3.14"
+
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the version matches the tag
+        run: |
+          version=$(sed -nE 's/^__version__ = "([^"]+)".*/\1/p' formsmarts_downloader/__init__.py)
+          project=$(sed -nE 's/^version = "([^"]+)".*/\1/p' pyproject.toml)
+          if [ -z "$version" ]; then echo "::error::__version__ not found"; exit 1; fi
+          if [ "$version" != "$project" ]; then
+            echo "::error::__version__ ($version) doesn't match pyproject.toml ($project)"
+            exit 1
+          fi
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match __version__ = $version"
+            exit 1
+          fi
+
   windows:
+    needs: version
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
       - name: Install
         run: python -m pip install . pyinstaller
       - name: Build
@@ -26,6 +58,7 @@ jobs:
           path: dist/*.exe
 
   macos:
+    needs: version
     runs-on: macos-14
     env:
       MACOS_BUNDLE_ID: ${{ vars.MACOS_BUNDLE_ID }}
@@ -34,7 +67,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
       - name: Install
         run: python -m pip install . pyinstaller
 
