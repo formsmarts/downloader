@@ -48,10 +48,34 @@ codesign --verify --strict --verbose=2 "$APP"
 DMG="$("$ROOT/packaging/macos/make_dmg.sh")"
 codesign --force --timestamp --sign "$MACOS_SIGN_IDENTITY" "$DMG"
 
+# Run a command up to 5 times, 30 s apart (CI runners can lose the network
+# briefly, and Apple's notary service can take a while).
+retry() {
+    local n
+    for n in 1 2 3 4 5; do
+        "$@" && return 0
+        echo "Attempt $n failed: $*" >&2
+        [[ $n -lt 5 ]] && sleep 30
+    done
+    return 1
+}
+
 if [[ -n "${NOTARY_KEY_PATH:-}" ]]; then
-    xcrun notarytool submit "$DMG" --wait \
-        --key "$NOTARY_KEY_PATH" --key-id "$NOTARY_API_KEY_ID" --issuer "$NOTARY_API_ISSUER_ID"
-    xcrun stapler staple "$DMG"
+    NOTARY_AUTH=(--key "$NOTARY_KEY_PATH" --key-id "$NOTARY_API_KEY_ID" --issuer "$NOTARY_API_ISSUER_ID")
+    # Submit once, then wait separately: a network error while waiting
+    # mustn't resubmit or fail the build.
+    SUBMIT_JSON="$(retry xcrun notarytool submit "$DMG" "${NOTARY_AUTH[@]}" --output-format json)"
+    SUBMISSION_ID="$(plutil -extract id raw -o - - <<< "$SUBMIT_JSON")"
+    echo "Notarization submission: $SUBMISSION_ID"
+    retry xcrun notarytool wait "$SUBMISSION_ID" "${NOTARY_AUTH[@]}" --timeout 1h || true
+    INFO_JSON="$(retry xcrun notarytool info "$SUBMISSION_ID" "${NOTARY_AUTH[@]}" --output-format json)"
+    STATUS="$(plutil -extract status raw -o - - <<< "$INFO_JSON")"
+    echo "Notarization status: $STATUS"
+    if [[ "$STATUS" != "Accepted" ]]; then
+        retry xcrun notarytool log "$SUBMISSION_ID" "${NOTARY_AUTH[@]}" || true
+        exit 1
+    fi
+    retry xcrun stapler staple "$DMG"
     spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
 else
     echo "NOTARY_KEY_PATH not set: skipping notarization."
